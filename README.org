@@ -1,2 +1,3 @@
+[[https://travis-ci.org/benjamin-james/httpd.svg?branch=master]]
 * httpd
 My first web server
