@@ -64,6 +64,10 @@ int init(int argc, char **argv, struct config *status)
 		switch (c) {
 		case 'h': {
 			printf("Usage: %s [OPTIONS]\n", argv[0]);
+			printf("\t--help    \tDisplay this message\n");
+			printf("\t--port    \tSet the port of the server\n");
+			printf("\t--root-dir\tSet the root directory of the server\n");
+			printf("\t--backlog\tSet the max incoming connections to listen to\n");
 			exit(EXIT_SUCCESS);
 		}
 		case 'b': {
@@ -92,7 +96,8 @@ int init(int argc, char **argv, struct config *status)
 		}
 	}
 	if (status->port == NULL) {
-		status->port = strdup("80");
+		uid_t uid = geteuid();
+		status->port = strdup(uid == 0 ? "80" : "8080");
 	}
 	if (status->root_dir == NULL) {
 		status->root_dir = get_current_dir_name();
