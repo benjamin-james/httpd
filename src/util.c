@@ -42,11 +42,34 @@ int check_digit(const char *msg)
 	regfree(&regex);
 	return 0;
 }
+
+int file_size(char **str, struct stat st)
+{
+	if (S_ISDIR(st.st_mode)) {
+		return asprintf(str, "[DIR]");
+	} else if (st.st_size < 1024) {
+		return asprintf(str, "%lu", st.st_size);
+	} else if (st.st_size < 1024 * 1024) {
+		return asprintf(str, "%.1fK", (double)st.st_size / 1024.0);
+	} else if (st.st_size < 1024 * 1024 * 1024) {
+		return asprintf(str, "%.1fM", (double)st.st_size / (1024.0 * 1024.0));
+	} else {
+		return asprintf(str, "%.1fG", (double)st.st_size / (1024.0 * 1024.0 * 1024.0));
+	}
+}
+
+int file_exists(const char *str)
+{
+	struct stat st;
+	return (stat(str, &st) == 0 && S_ISREG(st.st_mode)) ? 0 : -1;
+}
+
 int is_folder(const char *str)
 {
 	struct stat st;
 	return (stat(str, &st) == 0 && S_ISDIR(st.st_mode)) ? 0 : -1;
 }
+
 int init(int argc, char **argv, struct config *status)
 {
 	status->port = NULL;

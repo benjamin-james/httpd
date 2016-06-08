@@ -1,3 +1,10 @@
+/**
+ * @file main.c
+ * @author Benjamin James
+ *
+ * @brief Main entry point
+ */
+
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <netdb.h>
@@ -12,7 +19,13 @@
 #include "util.h"
 #include "http.h"
 
-
+/**
+ * @brief main
+ *
+ * @param argc the number of arguments
+ * @param argv the argument strings
+ * @return the success of the program
+ */
 int main(int argc, char **argv)
 {
 	struct config status;

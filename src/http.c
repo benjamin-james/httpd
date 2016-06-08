@@ -5,6 +5,8 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <time.h>
+#include <dirent.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdarg.h>
@@ -12,6 +14,7 @@
 #include <stdio.h>
 
 #include "http.h"
+#include "util.h"
 
 struct mime_type {
 	const char *extension;
@@ -151,8 +154,47 @@ void send_file(int sock, const char *uri)
 void send_dir(int sock, const char *uri)
 {
 	char *index;
+	char ltime[40];
 	int size = asprintf(&index, "%s/index.html", uri);
-	send_file(sock, index);
+	if (file_exists(index) != -1) {
+		send_file(sock, index);
+	} else {
+		int dir_fd = open(uri, O_DIRECTORY);
+		if (dir_fd < 0) {
+			perror("open");
+		}
+		send_line(sock, "HTTP/1.1 200 OK\r\n%s%s%s%s%s",
+			  "Content-Type: text/html\r\n\r\n",
+			  "<html><head><style>",
+			  "body{font-family: monospace; font-size: 13px;}",
+			  "td {padding: 1.5px 6px;}",
+			  "</style></head><body><table>\n");
+		DIR *d = fdopendir(dir_fd);
+		struct dirent *dp;
+		struct stat st;
+		int fd;
+		while ((dp = readdir(d)) != NULL) {
+			if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, "..")) {
+				continue;
+			} else if ((fd = openat(dir_fd, dp->d_name, O_RDONLY)) == -1) {
+				perror(dp->d_name);
+				continue;
+			}
+			fstat(fd, &st);
+			strftime(ltime, sizeof(ltime),
+				 "%Y-%m-%d %H:%M", localtime(&st.st_mtime));
+			if (S_ISREG(st.st_mode) || S_ISDIR(st.st_mode)) {
+				char *ext = S_ISREG(st.st_mode) ? "" : "/";
+				char *fsize;
+				file_size(&fsize, st);
+				send_line(sock, "<tr><td><a href=\"%s%s\">%s%s</a></td><td>%s</td><td>%s</td></tr>\n", dp->d_name, ext, dp->d_name, ext, ltime, fsize);
+				free(fsize);
+			}
+			close(fd);
+		}
+		send_line(sock, "</table></body></html>");
+		closedir(d);
+	}
 	free(index);
 }
 
