@@ -187,7 +187,7 @@ void send_dir(int sock, const char *uri)
 				char *ext = S_ISREG(st.st_mode) ? "" : "/";
 				char *fsize;
 				file_size(&fsize, st);
-				send_line(sock, "<tr><td><a href=\"%s%s\">%s%s</a></td><td>%s</td><td>%s</td></tr>\n", dp->d_name, ext, dp->d_name, ext, ltime, fsize);
+				send_line(sock, "<tr><td><a href=\"%s%s%s\">%s%s</a></td><td>%s</td><td>%s</td></tr>\n", basename(uri), dp->d_name, ext, dp->d_name, ext, ltime, fsize);
 				free(fsize);
 			}
 			close(fd);
